@@ -83,9 +83,27 @@ struct User {
     User *prev;
 };
 
-Order *receipts = NULL;
-Stock *stocks = NULL;
-User *users = NULL;
+typedef struct {
+    Order *head;
+    Order *tail;
+    int length;
+} OrderList;
+
+typedef struct {
+    Stock *head;
+    Stock *tail;
+    int length;
+} StockList;
+
+typedef struct {
+    Stock *head;
+    Stock *tail;
+    int length;
+} UserList;
+
+OrderList orders = {NULL, NULL, 0};
+StockList stocks = {NULL, NULL, 0};
+UserList users = {NULL, NULL, 0};
 
 // linked list functions for orders
 Order *createOrder(int id, int cashierId, PaymentType paymentType);
