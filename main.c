@@ -43,8 +43,7 @@ typedef struct Stock Stock;
 typedef struct User User;
 
 // Order is a struct that contains the information of an order
-struct Order
-{
+struct Order {
     int id;
     int cashierId;
     PaymentType paymentType;
@@ -64,8 +63,7 @@ struct Item {
     Item *prev;
 };
 
-struct Stock
-{
+struct Stock {
     int id;
     char name[101];
     int price;
@@ -75,13 +73,12 @@ struct Stock
     Stock *prev;
 };
 
-struct User
-{
+struct User {
     int id;
     char name[101];
     char hashedPassword[201];
     UserType type;
-    
+
     User *next;
     User *prev;
 };
@@ -138,9 +135,8 @@ void beginPrintOption();
 void pressEnterToContinue();
 void printMainMenuOptions();
 
-int main()
-{
-    #ifndef _WIN32
+int main() {
+#ifndef _WIN32
     initscr();
     cbreak();
     noecho();
@@ -150,41 +146,41 @@ int main()
         start_color();
         use_default_colors();
     }
-    #endif
+#endif
 
     srand(time(NULL));
     int state = 0;
     while (1) {
-        while(mainMenu());
+        while (mainMenu());
     }
     return 0;
 }
 
 void clearTerminal() {
-    #ifdef _WIN32
-        system("cls");
-    #else
+#ifdef _WIN32
+    system("cls");
+#else
         system("clear");
-    #endif
+#endif
 }
 
-void setCursor(int x, int y){
-    #ifdef _WIN32
-        const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        const COORD coord = {x, y};
-        SetConsoleCursorPosition(hOut, coord);
-    #else
+void setCursor(int x, int y) {
+#ifdef _WIN32
+    const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    const COORD coord = {x, y};
+    SetConsoleCursorPosition(hOut, coord);
+#else
         move(y, x);
-    #endif
+#endif
 }
 
 int menuArrowSelector(int total_option, int *selected) {
-    for(int i = 0; i < total_option; i++) {
+    for (int i = 0; i < total_option; i++) {
         setCursor(1, i + 2);
-        if(i == *selected) {
+        if (i == *selected) {
             printf(ANSI_GREEN);
             printf(">>>");
-        }else {
+        } else {
             printf(ANSI_RESET);
             printf("   ");
         }
@@ -194,7 +190,7 @@ int menuArrowSelector(int total_option, int *selected) {
     setCursor(0, 0);
 
     const int key = getch();
-    if (key == KEY_ARROW_PREFIX){
+    if (key == KEY_ARROW_PREFIX) {
         const int key2 = getch();
         switch (key2) {
             case KEY_ARROW_UP:
@@ -219,10 +215,10 @@ void beginPrintOption() {
 
 void pressEnterToContinue() {
     printf("\nPress enter to continue...");
-    while(getchar() != '\n');
+    while (getchar() != '\n');
 }
 
-void printMainMenuOptions(){
+void printMainMenuOptions() {
     beginPrintOption();
     printOption("Login");
     printOption("Register");
@@ -242,9 +238,9 @@ int mainMenu(){
     int totalOption = 3;
 
     int selected = 0;
-    while(1){
+    while (1) {
         const int key = menuArrowSelector(totalOption, &selected);
-        refresh(); 
+        refresh();
 
         if (key == KEY_ESC) {
             break;
