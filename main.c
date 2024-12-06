@@ -109,9 +109,10 @@ UserList users = {NULL, NULL, 0};
 Order *createOrder(int id, int cashierId, PaymentType paymentType);
 Order *findOrder(int id);
 void addOrder(Order *order);
-void removeOrder(Order *order);
-void addItemToOrder(Order *order, int itemId, int quantity);
-void modifyItemOnOrder(Order *order, int itemId, int quantity);
+void removeOrder(int id);
+Item *findItemFromOrder(int stockId);
+void addItemToOrder(Order *order, int stockId, int quantity);
+void modifyItemOnOrder(Order *order, int stockId, int quantity);
 void setOrderStatus(Order *order, OrderStatus status);
 
 // linked list functions for stocks
