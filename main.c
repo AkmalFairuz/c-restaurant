@@ -245,7 +245,7 @@ void printMainMenuOptions() {
     printOption("Exit");
 }
 
-int mainMenu(){
+int mainMenu() {
     clearTerminal();
 
     beginPrintOption();
@@ -278,4 +278,76 @@ int mainMenu(){
             }
         }
     }
+}
+
+Order *createOrder(int id, int cashierId, PaymentType paymentType) {
+    Order *order = malloc(sizeof(Order));
+    order->id = id;
+    order->cashierId = cashierId;
+    order->paymentType = paymentType;
+    return order;
+}
+
+Order *findOrder(int id) {
+    int currentIteration = 0;
+    for (Order *firstOrder = orders.head, Order *lastOrder = orders.tail;
+         firstOrder != NULL && lastOrder != NULL && currentIteration < (orders.length / 2 + 1);
+         firstOrder = firstOrder->next, lastOrder = lastOrder->prev) {
+        if (firstOrder->id == id) return firstOrder;
+        if (lastOrder->id == id) return lastOrder;
+        currentIteration++;
+    }
+    return NULL;
+}
+
+void addOrder(Order *order) {
+    if (orders.head == NULL) {
+        orders.head = order;
+        orders.tail = order;
+        orders.length = 1;
+    } else {
+        orders.tail->next = order;
+        order->prev = orders.tail;
+        orders.tail = order;
+        orders.length++;
+    }
+}
+
+void removeOrder(int id) {
+    Order *order = findOrder(id);
+    if (order == NULL) return;
+    if (order == orders.head) {
+        orders.head = order->next;
+        orders.head->prev = NULL;
+    } else if (order == orders.tail) {
+        orders.tail = order->prev;
+        orders.tail->next = NULL;
+    } else {
+        order->prev->next = order->next;
+        order->next->prev = order->prev;
+    }
+    free(order);
+    orders.length--;
+}
+
+Order *findItemFromOrder(int stockId) {
+
+}
+
+void addItemToOrder(Order *order, int stockId, int quantity) {
+    Item *targetItem = findStock(stockId);
+    if (targetItem == NULL) return;
+
+}
+
+Stock *findStock(int id) {
+    int currentIteration = 0;
+    for (Order *firstStock = stocks.head, Order *lastStock = stocks.tail;
+         firstStock != NULL && lastStock != NULL && currentIteration < (stocks.length / 2 + 1);
+         firstStock = firstStock->next, lastStock = lastStock->prev) {
+        if (firstStock->id == id) return firstStock;
+        if (lastStock->id == id) return lastStock;
+        currentIteration++;
+    }
+    return NULL;
 }
