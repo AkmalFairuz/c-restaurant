@@ -36,7 +36,9 @@
 #define ANSI_RESET "\033[0m"
 
 typedef enum { PAYPAL, CREDIT_CARD, DEBIT_CARD, CASH } PaymentType;
+
 typedef enum { WAITING, CANCELLED, COMPLETED } OrderStatus;
+
 typedef enum { BUYER, CASHIER, ADMIN } UserType;
 
 typedef struct Order Order;
@@ -98,8 +100,8 @@ typedef struct {
 } StockList;
 
 typedef struct {
-    Stock *head;
-    Stock *tail;
+    User *head;
+    User *tail;
     int length;
 } UserList;
 
@@ -107,53 +109,84 @@ OrderList orders = {NULL, NULL, 0};
 StockList stocks = {NULL, NULL, 0};
 UserList users = {NULL, NULL, 0};
 
+Item *createItem(int stockId, int quantity);
+
 // linked list functions for orders
-Order *createOrder(int id, int cashierId, PaymentType paymentType);
+Order *createOrder(int cashierId, PaymentType paymentType);
+
 Order *findOrder(int id);
+
 void addOrder(Order *order);
+
 void removeOrder(int id);
+
 Item *findItemFromOrder(int stockId);
+
 void addItemToOrder(Order *order, int stockId, int quantity);
+
 void modifyItemOnOrder(Order *order, int stockId, int quantity);
+
 void setOrderStatus(Order *order, OrderStatus status);
 
 // linked list functions for stocks
-void *createStock(int id, char name[], int price, int quantity);
+void *createStock(char name[], int price, int quantity);
+
 Stock *findStock(int id);
+
 void addStock(Stock *stock);
+
 void removeStock(Stock *stock);
+
 void incrementQuantity(int id, int amount);
+
 void decrementQuantity(int id, int amount);
 
 // linked list functions for users
-void *createUser(int id, char name[], char hashedPassword[], UserType type);
+User *createUser(char name[], char hashedPassword[], UserType type);
+
 User *findUser(int id);
+
 void addUser(User *user);
+
 void removeUser(User *user);
+
 void changePassword(User *user, char hashedPassword[]);
 
 // functions for user management
 void registerUser(char name[], char password[], UserType type);
+
 void hashPassword(char password[], char hashedPassword[]);
+
 bool verifyPassword(int userId, char password[]);
 
 // functions for file management
 void readOrdersFromFile();
+
 void readStocksFromFile();
+
 void readUsersFromFile();
 
 void writeOrdersToFile();
+
 void writeStocksToFile();
+
 void writeUsersToFile();
 
 
 void clearTerminal();
+
 int mainMenu();
+
 void setCursor(int x, int y);
+
 int menuArrowSelector(int total_option, int *selected);
+
 void printOption(const char *option);
+
 void beginPrintOption();
+
 void pressEnterToContinue();
+
 void printMainMenuOptions();
 
 int main() {
@@ -224,10 +257,10 @@ int menuArrowSelector(int total_option, int *selected) {
         }
         return key2;
     }
-    if(key == KEY_W) {
+    if (key == KEY_W) {
         *selected = (*selected - 1 + total_option) % total_option;
     }
-    if(key == KEY_S) {
+    if (key == KEY_S) {
         *selected = (*selected + 1) % total_option;
     }
     return key;
@@ -268,9 +301,9 @@ int mainMenu() {
     int selected = 0;
     while (1) {
         const int key = menuArrowSelector(totalOption, &selected);
-        #ifndef _WIN32
+#ifndef _WIN32
         refresh();
-        #endif
+#endif
 
         if (key == KEY_ESC) {
             exit(0);
@@ -296,12 +329,29 @@ int mainMenu() {
     return 1;
 }
 
-Order *createOrder(int id, int cashierId, PaymentType paymentType) {
+int idGenerator(int length = 5) {
+    srand(time(NULL));
+    int id = rand();
+    id = id % (int) pow(10, length);
+    return id;
+}
+
+Order *createOrder(int cashierId, PaymentType paymentType) {
     Order *order = malloc(sizeof(Order));
-    order->id = id;
+    order->id = idGenerator(5);
     order->cashierId = cashierId;
     order->paymentType = paymentType;
     return order;
+}
+
+Item *createItem(int stockId, int quantity) {
+    Item *item = malloc(sizeof(Item));
+    item->id = idGenerator(6);
+    item->quantity = quantity;
+    item->stockId = stockId;
+    item->prev = NULL;
+    item->next = NULL;
+    return item;
 }
 
 Order *findOrder(int id) {
@@ -351,9 +401,26 @@ Item *findItemFromOrder(int stockId) {
 }
 
 void addItemToOrder(Order *order, int stockId, int quantity) {
-    Stock *targetItem = findStock(stockId);
-    if (targetItem == NULL) return;
+    Stock *stock = findStock(stockId);
+    if (stock == NULL) return;
 
+    int found = 0;
+    for (Item *item = order->items; item != NULL; item = item->next) {
+        if (item->stockId == stockId) {
+            item->quantity += quantity;
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        Item *item = createItem(stockId, quantity);
+        item->next = order->items;
+        if (order->items != NULL) {
+            order->items->prev = item;
+        }
+        order->items = item;
+    }
 }
 
 Stock *findStock(int id) {
@@ -366,4 +433,121 @@ Stock *findStock(int id) {
         currentIteration++;
     }
     return NULL;
+}
+
+void addStock(Stock *stock) {
+    if (stocks.head == NULL) {
+        stocks.head = stock;
+        stocks.tail = stock;
+        stocks.length = 1;
+    } else {
+        stocks.tail->next = stock;
+        stock->prev = stocks.tail;
+        stocks.tail = stock;
+        stocks.length++;
+    }
+}
+
+void removeStock(Stock *stock) {
+    if (stocks.head != NULL && stock->id == stocks.head->id) {
+        stocks.head = stock->next;
+        stocks.head->prev = NULL;
+    } else if (stocks.tail != NULL && stock->id == stocks.tail->id) {
+        stocks.tail = stock->prev;
+        stocks.tail->next = NULL;
+    } else {
+        stock->prev->next = stock->next;
+        stock->next->prev = stock->prev;
+    }
+    free(stock);
+    stocks.length--;
+}
+
+void incrementQuantity(int stockId, int quantity) {
+    Stock *stock = findStock(stockId);
+    if (stock == NULL) return;
+    stock->quantity += quantity;
+}
+
+void decrementQuantity(int stockId, int quantity) {
+    Stock *stock = findStock(stockId);
+    if (stock == NULL) return;
+    stock->quantity -= quantity;
+}
+
+User *createUser(char name[], char hashedPassword[], UserType type) {
+    User *user = malloc(sizeof(User));
+    user->id = idGenerator(7);
+    strcpy(user->name, name);
+    strcpy(user->hashedPassword, hashedPassword);
+    user->type = type;
+    return user;
+}
+
+User *findUser(int id) {
+    int currentIteration = 0;
+    for (User *firstUser = users.head, *lastUser = users.tail;
+         firstUser != NULL && lastUser != NULL && currentIteration < (users.length / 2 + 1);
+         firstUser = firstUser->next, lastUser = lastUser->prev) {
+        if (firstUser->id == id) return firstUser;
+        if (lastUser->id == id) return lastUser;
+        currentIteration++;
+    }
+    return NULL;
+}
+
+void addUser(User *user) {
+    if (users.head == NULL) {
+        users.head = user;
+        users.tail = user;
+        users.length = 1;
+    } else {
+        users.tail->next = user;
+        user->prev = users.tail;
+        users.tail = user;
+        users.length++;
+    }
+}
+
+void removeUser(User *user) {
+    if (users.head != NULL && user->id == users.head->id) {
+        users.head = user->next;
+        users.head->prev = NULL;
+    } else if (users.tail != NULL && user->id == users.tail->id) {
+        users.tail = user->prev;
+        users.tail->next = NULL;
+    } else {
+        user->prev->next = user->next;
+        user->next->prev = user->prev;
+    }
+    free(user);
+    users.length--;
+}
+
+void changePassword(User *user, char hashedPassword[]) {
+    strcpy(user->hashedPassword, hashedPassword);
+}
+
+void registerUser(char name[], char password[], UserType type) {
+    User *user = createUser(name, password, type);
+    addUser(user);
+}
+
+void hashPassword(char password[], char hashedPassword[]) {
+    // let's say abc, where a = 97, b = 98, c = 99
+    int passwordLength = strlen(password);
+    for (int i = 0; i < passwordLength; i++) {
+        hashedPassword[i] = password[i] + (i * 7) % 26;
+        // a = 97 + (0 * 7) % 26 = 97 + (0 * 7) = 97
+        // b = 98 + (1 * 7) % 26 = 98 + (1 * 7) = 105
+        // c = 99 + (2 * 7) % 26 = 99 + (2 * 7) = 106
+    }
+    hashedPassword[passwordLength] = '\0';
+}
+
+bool verifyPassword(User *user, char password[]) {
+    char hashedPassword[201];
+    hashPassword(password, hashedPassword);
+    if (strcmp(user->hashedPassword, hashedPassword) == 0) return true;
+    else return false;
 }
