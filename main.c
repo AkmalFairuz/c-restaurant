@@ -87,6 +87,11 @@ struct User {
     User *prev;
 };
 
+struct Buyer {
+    int id;
+
+};
+
 typedef struct {
     Order *head;
     Order *tail;
@@ -128,10 +133,14 @@ void addItemToOrder(Order *order, int stockId, int quantity);
 
 void modifyItemOnOrder(Order *order, int stockId, int quantity);
 
-void setOrderStatus(Order *order, OrderStatus status);
+char *getItemNames(Item *head);
+
+char *getPaymentName(PaymentType paymentType);
+
+char *getOrderStatusName(OrderStatus orderStatus);
 
 // linked list functions for stocks
-void *createStock(char name[], int price, int quantity);
+Stock *createStock(char name[], int price, int quantity);
 
 Stock *findStock(int id);
 
@@ -204,6 +213,10 @@ int loginView();
 int registerView();
 
 int creditsView();
+
+int viewOrders();
+
+void printOrders();
 
 bool isLogged();
 
@@ -347,10 +360,10 @@ int mainMenu() {
             clearTerminal();
             switch (selected) {
                 case 0:
-                    loginView();
+                    while (loginView());
                     return 1;
                 case 1:
-                    registerView();
+                    while (registerView());
                     return 1;
                 case 2:
                     printf("Created by: \n");
@@ -382,19 +395,22 @@ int loginView() {
     scanf("%100s", password);
     getchar();
 
-    for(User *user = users.head; user != NULL; user = user->next) {
-        if(strcmp(user->name, username) == 0) {
-            if(verifyPassword(user, password)) {
+    for (User *user = users.head; user != NULL; user = user->next) {
+        if (strcmp(user->name, username) == 0) {
+            if (verifyPassword(user, password)) {
                 clearTerminal();
                 printc("Login successful!\n", ANSI_GREEN);
                 loggedUser = user;
                 pressEnterToContinue();
                 return 0;
+            } else {
+                printc("INVALID PWD\n", ANSI_RED);
             }
         }
     }
 
     printc("Invalid username or password!\n", ANSI_RED);
+    pressEnterToContinue();
     return 1;
 }
 
@@ -407,19 +423,19 @@ int registerView() {
     char username[105];
     char password[105];
 
-    while(1){
+    while (1) {
         printc("Enter a username: ", ANSI_BLUE);
         scanf("%100s", temp);
         getchar();
-        if(findUserByName(temp) != NULL) {
+        if (findUserByName(temp) != NULL) {
             printc("Username already exists!\n", ANSI_RED);
             continue;
         }
-        if(strlen(temp) <= 3){
+        if (strlen(temp) <= 3) {
             printc("Username must be at least 4 characters long!\n", ANSI_RED);
             continue;
         }
-        if(strlen(temp) > 20){
+        if (strlen(temp) > 20) {
             printc("Username must be at most 20 characters long!\n", ANSI_RED);
             continue;
         }
@@ -429,14 +445,14 @@ int registerView() {
     }
 
     printc("Enter a password: ", ANSI_BLUE);
-    while(1){
+    while (1) {
         scanf("%100s", temp);
         getchar();
-        if(strlen(temp) <= 5){
+        if (strlen(temp) <= 5) {
             printc("Password must be at least 6 characters long!\n", ANSI_RED);
             continue;
         }
-        if(strlen(temp) > 50){
+        if (strlen(temp) > 50) {
             printc("Password must be at most 50 characters long!\n", ANSI_RED);
             continue;
         }
@@ -453,20 +469,20 @@ int registerView() {
     printOption("Cashier");
     printOption("Admin");
 
-    int totalOption = 2;
+    int totalOption = 3;
     int selected = 0;
 
-    while(1) {
+    while (1) {
         const int key = menuArrowSelector(totalOption, &selected);
-        #ifndef _WIN32
+#ifndef _WIN32
         refresh();
-        #endif
+#endif
 
-        if(key == KEY_ESC) {
+        if (key == KEY_ESC) {
             return 1;
         }
 
-        if(key == KEY_ENTER) {
+        if (key == KEY_ENTER) {
             registerUser(username, password, selected);
             clearTerminal();
             printc("User registered successfully, you can now login!\n", ANSI_GREEN);
@@ -479,14 +495,103 @@ int registerView() {
 }
 
 int chefMainMenu() {
+    beginPrintOption();
+
+    printOption("View orders");
+    printOption("Cook order");
+
+    int totalOption = 2;
+    int selected = 0;
+
+    while (1) {
+        const int key = menuArrowSelector(totalOption, &selected);
+#ifndef _WIN32
+        refresh();
+#endif
+
+        if (key == KEY_ESC) {
+            exit(0);
+        }
+
+        if (key == KEY_ENTER) {
+            clearTerminal();
+            switch (selected) {
+                case 0:
+                    while (viewOrders());
+                    return 1;
+                case 1:
+                    // while (cookOrder());
+                    return 1;
+            }
+        }
+    }
     return 1;
+}
+
+void printOrders() {
+    printf("| %-5s | %-10s | %-10s | %-10s | %-25s |\n", "ID", "Cashier", "Payment", "Status", "Items");
+    printf("| %-5s | %-10s | %-10s | %-10s | %-25s |\n", "-----", "----------", "----------", "----------",
+           "----------");
+    for (Order *order = orders.head; order != NULL; order = order->next) {
+        printf("| %-5d | %-10s | %-10s | %-10d | %-25s |\n", order->id, findUser(order->cashierId)->name,
+               getPaymentName(order->paymentType), order->orderStatus, getItemNames(order->items));
+    }
+    printf("| %-5s | %-10s | %-10s | %-10s | %-25s |\n", "-----", "----------", "----------", "----------",
+           "----------");
+}
+
+int viewOrders() {
+    clearTerminal();
+
+    printf("Available Orders\n\n");
+    printOrders();
+    pressEnterToContinue();
+
+    return 0;
+}
+
+int cookOrder() {
+
 }
 
 int cashierMainMenu() {
+    beginPrintOption();
+
+    printOption("Select Order");
+    printOption("Orders");
+
+    int totalOption = 2;
+    int selected = 0;
+
+    while (1) {
+        const int key = menuArrowSelector(totalOption, &selected);
+#ifndef _WIN32
+        refresh();
+#endif
+
+        if (key == KEY_ESC) {
+            exit(0);
+        }
+
+        if (key == KEY_ENTER) {
+            clearTerminal();
+            switch (selected) {
+                case 0:
+                    return 1;
+                case 1:
+                    while (viewOrders());
+                    return 1;
+            }
+        }
+    }
     return 1;
 }
 
+
+
 int adminMainMenu() {
+    printf("ADMIN\n");
+    pressEnterToContinue();
     return 1;
 }
 
@@ -587,6 +692,12 @@ void addItemToOrder(Order *order, int stockId, int quantity) {
         }
         order->items = item;
     }
+}
+
+void modifyItemOnOrder(Order *order, int stockId, int quantity) {
+    for (Item *item = order->items; item != NULL; item = item->next)
+        if (item->stockId == stockId)
+            item->quantity = quantity;
 }
 
 Stock *findStock(int id) {
@@ -695,7 +806,9 @@ void changePassword(User *user, char hashedPassword[]) {
 }
 
 void registerUser(char name[], char password[], UserType type) {
-    User *user = createUser(name, password, type);
+    char hashed[201];
+    hashPassword(password, hashed);
+    User *user = createUser(name, hashed, type);
     addUser(user);
 }
 
@@ -727,4 +840,40 @@ User *findUserByName(const char *name) {
 
 bool isLogged() {
     return loggedUser != NULL;
+}
+
+char *getItemNames(Item *head) {
+    for (Item *item = head; item != NULL; item = item->next) {
+        Stock *stock = findStock(item->stockId);
+        printf("%s x%d", stock->name, item->quantity);
+
+        if (item->next != NULL) printf(", ");
+    }
+}
+
+char *getPaymentName(PaymentType paymentType) {
+    switch (paymentType) {
+        case PAYPAL: return "PayPal";
+        case CREDIT_CARD: return "Credit Card";
+        case DEBIT_CARD: return "Debit Card";
+        case CASH: return "Cash";
+        default: return "Unknown";
+    }
+}
+
+char *getOrderStatusName(OrderStatus orderStatus) {
+    switch (orderStatus) {
+        case WAITING: return "Waiting";
+        case CANCELLED: return "Cancelled";
+        case COMPLETED: return "Completed";
+        default: return "Unknown";
+    }
+}
+
+Stock *createStock(char *name, int price, int quantity) {
+    Stock *stock = malloc(sizeof(Stock));
+    strcpy(stock->name, name);
+    stock->price = price;
+    stock->quantity = quantity;
+    return stock;
 }
