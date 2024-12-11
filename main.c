@@ -109,6 +109,8 @@ OrderList orders = {NULL, NULL, 0};
 StockList stocks = {NULL, NULL, 0};
 UserList users = {NULL, NULL, 0};
 
+User *loggedUser = NULL;
+
 Item *createItem(int stockId, int quantity);
 
 // linked list functions for orders
@@ -146,7 +148,7 @@ User *createUser(char name[], char hashedPassword[], UserType type);
 
 User *findUser(int id);
 
-User *findUserByName(char name[]);
+User *findUserByName(const char *name);
 
 void addUser(User *user);
 
@@ -181,6 +183,10 @@ int mainMenu();
 
 int chefMainMenu();
 
+int cashierMainMenu();
+
+int adminMainMenu();
+
 void setCursor(int x, int y);
 
 int menuArrowSelector(int total_option, int *selected);
@@ -194,8 +200,12 @@ void pressEnterToContinue();
 void printMainMenuOptions();
 
 int loginView();
+
 int registerView();
+
 int creditsView();
+
+bool isLogged();
 
 void printc(char *text, char *color);
 
@@ -302,6 +312,16 @@ void printMainMenuOptions() {
 }
 
 int mainMenu() {
+    if (isLogged()) {
+        switch (loggedUser->type) {
+            case CHEF:
+                return chefMainMenu();
+            case CASHIER:
+                return cashierMainMenu();
+            case ADMIN:
+                return adminMainMenu();
+        }
+    }
     clearTerminal();
 
     printMainMenuOptions();
@@ -327,12 +347,17 @@ int mainMenu() {
             clearTerminal();
             switch (selected) {
                 case 0:
+                    loginView();
+                    return 1;
                 case 1:
+                    registerView();
+                    return 1;
                 case 2:
-                case 3:
                     printf("Created by: \n");
                     pressEnterToContinue();
                     return 1;
+                case 3:
+                    return 0;
             }
         }
     }
@@ -344,20 +369,25 @@ int loginView() {
 
     printf("Login\n\n");
 
-    printc("Username: ", ANSI_BLUE);
+    printc("Username:   \n", ANSI_BLUE);
+    printc("Password:   \n", ANSI_BLUE);
+
+    setCursor(10, 2);
     char username[105];
     scanf("%100s", username);
     getchar();
 
-    printc("Password: ", ANSI_BLUE);
+    setCursor(10, 3);
     char password[105];
     scanf("%100s", password);
     getchar();
 
     for(User *user = users.head; user != NULL; user = user->next) {
         if(strcmp(user->name, username) == 0) {
-            if(verifyPassword(user->id, password)) {
+            if(verifyPassword(user, password)) {
+                clearTerminal();
                 printc("Login successful!\n", ANSI_GREEN);
+                loggedUser = user;
                 pressEnterToContinue();
                 return 0;
             }
@@ -393,7 +423,7 @@ int registerView() {
             printc("Username must be at most 20 characters long!\n", ANSI_RED);
             continue;
         }
-        
+
         strcpy(username, temp);
         break;
     }
@@ -417,7 +447,7 @@ int registerView() {
 
     clearTerminal();
 
-    printc("Select a user type:\n", ANSI_BLUE);
+    printc("Select a user type:", ANSI_BLUE);
     beginPrintOption();
     printOption("Chef");
     printOption("Cashier");
@@ -438,6 +468,7 @@ int registerView() {
 
         if(key == KEY_ENTER) {
             registerUser(username, password, selected);
+            clearTerminal();
             printc("User registered successfully, you can now login!\n", ANSI_GREEN);
             pressEnterToContinue();
             return 0;
@@ -455,9 +486,11 @@ int cashierMainMenu() {
     return 1;
 }
 
-int
+int adminMainMenu() {
+    return 1;
+}
 
-int idGenerator(int length = 5) {
+int idGenerator(int length) {
     srand(time(NULL));
     int id = rand();
     id = id % (int) pow(10, length);
@@ -525,7 +558,12 @@ void removeOrder(int id) {
 }
 
 Item *findItemFromOrder(int stockId) {
-    return NULL; // TODO
+    for (Order *order = orders.head; order != NULL; order = order->next) {
+        for (Item *item = order->items; item != NULL; item = item->next) {
+            if (item->stockId == stockId) return item;
+        }
+    }
+    return NULL;
 }
 
 void addItemToOrder(Order *order, int stockId, int quantity) {
@@ -678,4 +716,15 @@ bool verifyPassword(User *user, char password[]) {
     hashPassword(password, hashedPassword);
     if (strcmp(user->hashedPassword, hashedPassword) == 0) return true;
     else return false;
+}
+
+User *findUserByName(const char *name) {
+    for (User *user = users.head; user != NULL; user = user->next) {
+        if (strcmp(user->name, name) == 0) return user;
+    }
+    return NULL;
+}
+
+bool isLogged() {
+    return loggedUser != NULL;
 }
