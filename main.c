@@ -290,7 +290,7 @@ Order *createOrder(int id, int cashierId, PaymentType paymentType) {
 
 Order *findOrder(int id) {
     int currentIteration = 0;
-    for (Order *firstOrder = orders.head, Order *lastOrder = orders.tail;
+    for (Order *firstOrder = orders.head, *lastOrder = orders.tail;
          firstOrder != NULL && lastOrder != NULL && currentIteration < (orders.length / 2 + 1);
          firstOrder = firstOrder->next, lastOrder = lastOrder->prev) {
         if (firstOrder->id == id) return firstOrder;
@@ -330,8 +330,8 @@ void removeOrder(int id) {
     orders.length--;
 }
 
-Order *findItemFromOrder(int stockId) {
-
+Item *findItemFromOrder(int stockId) {
+    return NULL; // TODO
 }
 
 void addItemToOrder(Order *order, int stockId, int quantity) {
@@ -342,7 +342,7 @@ void addItemToOrder(Order *order, int stockId, int quantity) {
 
 Stock *findStock(int id) {
     int currentIteration = 0;
-    for (Order *firstStock = stocks.head, Order *lastStock = stocks.tail;
+    for (Order *firstStock = stocks.head, *lastStock = stocks.tail;
          firstStock != NULL && lastStock != NULL && currentIteration < (stocks.length / 2 + 1);
          firstStock = firstStock->next, lastStock = lastStock->prev) {
         if (firstStock->id == id) return firstStock;
