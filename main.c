@@ -19,6 +19,8 @@
 #define KEY_ARROW_LEFT 75
 #define KEY_ARROW_RIGHT 77
 #define KEY_ESC 27
+#define KEY_W 119
+#define KEY_S 115
 
 #ifndef KEY_ENTER
 #define KEY_ENTER 13
@@ -178,6 +180,7 @@ int main() {
 void clearTerminal() {
 #ifdef _WIN32
     system("cls");
+    setCursor(0, 0);
 #else
         system("clear");
 #endif
@@ -221,6 +224,12 @@ int menuArrowSelector(int total_option, int *selected) {
         }
         return key2;
     }
+    if(key == KEY_W) {
+        *selected = (*selected - 1 + total_option) % total_option;
+    }
+    if(key == KEY_S) {
+        *selected = (*selected + 1) % total_option;
+    }
     return key;
 }
 
@@ -254,19 +263,25 @@ int mainMenu() {
     printOption("Credits");
     printOption("Exit");
 
-    int totalOption = 3;
+    int totalOption = 4;
 
     int selected = 0;
     while (1) {
         const int key = menuArrowSelector(totalOption, &selected);
+        #ifndef _WIN32
         refresh();
+        #endif
+
+        if (key == KEY_ESC) {
+            exit(0);
+        }
 
         if (key == KEY_ESC) {
             break;
         }
 
         if (key == KEY_ENTER) {
-            clear();
+            clearTerminal();
             switch (selected) {
                 case 0:
                 case 1:
@@ -274,10 +289,11 @@ int mainMenu() {
                 case 3:
                     printf("Created by: \n");
                     pressEnterToContinue();
-                    break;
+                    return 1;
             }
         }
     }
+    return 1;
 }
 
 Order *createOrder(int id, int cashierId, PaymentType paymentType) {
@@ -335,14 +351,14 @@ Item *findItemFromOrder(int stockId) {
 }
 
 void addItemToOrder(Order *order, int stockId, int quantity) {
-    Item *targetItem = findStock(stockId);
+    Stock *targetItem = findStock(stockId);
     if (targetItem == NULL) return;
 
 }
 
 Stock *findStock(int id) {
     int currentIteration = 0;
-    for (Order *firstStock = stocks.head, *lastStock = stocks.tail;
+    for (Stock *firstStock = stocks.head, *lastStock = stocks.tail;
          firstStock != NULL && lastStock != NULL && currentIteration < (stocks.length / 2 + 1);
          firstStock = firstStock->next, lastStock = lastStock->prev) {
         if (firstStock->id == id) return firstStock;
