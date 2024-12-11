@@ -39,7 +39,7 @@ typedef enum { PAYPAL, CREDIT_CARD, DEBIT_CARD, CASH } PaymentType;
 
 typedef enum { WAITING, CANCELLED, COMPLETED } OrderStatus;
 
-typedef enum { BUYER, CASHIER, ADMIN } UserType;
+typedef enum { CHEF, CASHIER, ADMIN } UserType;
 
 typedef struct Order Order;
 typedef struct Item Item;
@@ -178,6 +178,8 @@ void writeUsersToFile();
 void clearTerminal();
 
 int mainMenu();
+
+int chefMainMenu();
 
 void setCursor(int x, int y);
 
@@ -417,11 +419,11 @@ int registerView() {
 
     printc("Select a user type:\n", ANSI_BLUE);
     beginPrintOption();
-    printOption("Buyer");
+    printOption("Chef");
     printOption("Cashier");
     printOption("Admin");
 
-    int totalOption = 3;
+    int totalOption = 2;
     int selected = 0;
 
     while(1) {
@@ -444,6 +446,16 @@ int registerView() {
 
     return 1;
 }
+
+int chefMainMenu() {
+    return 1;
+}
+
+int cashierMainMenu() {
+    return 1;
+}
+
+int
 
 int idGenerator(int length = 5) {
     srand(time(NULL));
