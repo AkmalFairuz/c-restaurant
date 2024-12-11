@@ -185,7 +185,6 @@ void writeStocksToFile();
 
 void writeUsersToFile();
 
-
 void clearTerminal();
 
 int mainMenu();
@@ -218,6 +217,8 @@ int viewOrders();
 
 void printOrders();
 
+int cookOrder();
+
 bool isLogged();
 
 void printc(char *text, char *color);
@@ -233,6 +234,8 @@ int main() {
         start_color();
         use_default_colors();
     }
+#else
+    SetConsoleOutputCP(CP_UTF8);
 #endif
 
     srand(time(NULL));
@@ -520,11 +523,30 @@ int chefMainMenu() {
                     while (viewOrders());
                     return 1;
                 case 1:
-                    // while (cookOrder());
+                    while (cookOrder());
                     return 1;
             }
         }
     }
+    return 1;
+}
+
+int cookOrder() {
+    printf("Cook Order\n");
+    printOrders();
+    printc("Enter order ID to cook: ", ANSI_BLUE);
+    int orderId;
+    scanf("%d", &orderId);
+    getchar();
+
+    Order *order = findOrder(orderId);
+    if (order == NULL) {
+        printc("Order not found!\n", ANSI_RED);
+        pressEnterToContinue();
+        return 1;
+    }
+
+    clearTerminal();
     return 1;
 }
 
@@ -550,15 +572,11 @@ int viewOrders() {
     return 0;
 }
 
-int cookOrder() {
-
-}
-
 int cashierMainMenu() {
     beginPrintOption();
 
     printOption("Select Order");
-    printOption("Orders");
+    printOption("View Orders");
 
     int totalOption = 2;
     int selected = 0;
