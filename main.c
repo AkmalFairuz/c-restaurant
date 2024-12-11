@@ -128,6 +128,7 @@ void decrementQuantity(int id, int amount);
 // linked list functions for users
 void *createUser(int id, char name[], char hashedPassword[], UserType type);
 User *findUser(int id);
+User *findUserByName(char name[]);
 void addUser(User *user);
 void removeUser(User *user);
 void changePassword(User *user, char hashedPassword[]);
@@ -155,6 +156,12 @@ void printOption(const char *option);
 void beginPrintOption();
 void pressEnterToContinue();
 void printMainMenuOptions();
+
+int loginView();
+int registerView();
+int creditsView();
+
+void printc(char *text, char *color);
 
 int main() {
 #ifndef _WIN32
@@ -194,6 +201,10 @@ void setCursor(int x, int y) {
 #else
         move(y, x);
 #endif
+}
+
+void printc(char *text, char *color) {
+    printf("%s%s%s", color, text, ANSI_RESET);
 }
 
 int menuArrowSelector(int total_option, int *selected) {
@@ -257,11 +268,7 @@ void printMainMenuOptions() {
 int mainMenu() {
     clearTerminal();
 
-    beginPrintOption();
-    printOption("Login");
-    printOption("Register");
-    printOption("Credits");
-    printOption("Exit");
+    printMainMenuOptions();
 
     int totalOption = 4;
 
@@ -293,6 +300,114 @@ int mainMenu() {
             }
         }
     }
+    return 1;
+}
+
+int loginView() {
+    clearTerminal();
+
+    printf("Login\n\n");
+
+    printc("Username: ", ANSI_BLUE);
+    char username[105];
+    scanf("%100s", username);
+    getchar();
+
+    printc("Password: ", ANSI_BLUE);
+    char password[105];
+    scanf("%100s", password);
+    getchar();
+
+    for(User *user = users.head; user != NULL; user = user->next) {
+        if(strcmp(user->name, username) == 0) {
+            if(verifyPassword(user->id, password)) {
+                printc("Login successful!\n", ANSI_GREEN);
+                pressEnterToContinue();
+                return 0;
+            }
+        }
+    }
+
+    printc("Invalid username or password!\n", ANSI_RED);
+    return 1;
+}
+
+int registerView() {
+    clearTerminal();
+
+    printf("Register\n\n");
+
+    char temp[105];
+    char username[105];
+    char password[105];
+
+    while(1){
+        printc("Enter a username: ", ANSI_BLUE);
+        scanf("%100s", temp);
+        getchar();
+        if(findUserByName(temp) != NULL) {
+            printc("Username already exists!\n", ANSI_RED);
+            continue;
+        }
+        if(strlen(temp) <= 3){
+            printc("Username must be at least 4 characters long!\n", ANSI_RED);
+            continue;
+        }
+        if(strlen(temp) > 20){
+            printc("Username must be at most 20 characters long!\n", ANSI_RED);
+            continue;
+        }
+        
+        strcpy(username, temp);
+        break;
+    }
+
+    printc("Enter a password: ", ANSI_BLUE);
+    while(1){
+        scanf("%100s", temp);
+        getchar();
+        if(strlen(temp) <= 5){
+            printc("Password must be at least 6 characters long!\n", ANSI_RED);
+            continue;
+        }
+        if(strlen(temp) > 50){
+            printc("Password must be at most 50 characters long!\n", ANSI_RED);
+            continue;
+        }
+
+        strcpy(password, temp);
+        break;
+    }
+
+    clearTerminal();
+
+    printc("Select a user type:\n", ANSI_BLUE);
+    beginPrintOption();
+    printOption("Buyer");
+    printOption("Cashier");
+    printOption("Admin");
+
+    int totalOption = 3;
+    int selected = 0;
+
+    while(1) {
+        const int key = menuArrowSelector(totalOption, &selected);
+        #ifndef _WIN32
+        refresh();
+        #endif
+
+        if(key == KEY_ESC) {
+            return 1;
+        }
+
+        if(key == KEY_ENTER) {
+            registerUser(username, password, selected);
+            printc("User registered successfully, you can now login!\n", ANSI_GREEN);
+            pressEnterToContinue();
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -364,6 +479,13 @@ Stock *findStock(int id) {
         if (firstStock->id == id) return firstStock;
         if (lastStock->id == id) return lastStock;
         currentIteration++;
+    }
+    return NULL;
+}
+
+User *findUserByName(char name[]) {
+    for (User *user = users.head; user != NULL; user = user->next) {
+        if (strcmp(user->name, name) == 0) return user;
     }
     return NULL;
 }
