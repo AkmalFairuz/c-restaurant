@@ -157,7 +157,7 @@ void registerUser(char name[], char password[], UserType type);
 
 void hashPassword(char password[], char hashedPassword[]);
 
-bool verifyPassword(int userId, char password[]);
+bool verifyPassword(User *user, char password[]);
 
 // functions for file management
 void readOrdersFromFile();
